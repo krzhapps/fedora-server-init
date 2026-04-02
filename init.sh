@@ -15,3 +15,9 @@ sudo usermod -aG docker dkrzhalovski
 
 # Allow common front-end ports
 sudo firewall-cmd --permanent --add-port=8000/tcp --add-port=3000/tcp
+
+# Utils and common requirements
+# uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# tmux
+sudo dnf -y install tmux
