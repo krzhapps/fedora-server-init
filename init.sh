@@ -14,7 +14,8 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker dkrzhalovski
 
 # Allow common front-end ports
-sudo firewall-cmd --permanent --add-port=8000/tcp --add-port=3000/tcp
+sudo firewall-cmd --permanent --add-port=8000/tcp --add-port=3000/tcp --add-port=8080/tcp --add-port=8096/tcp
+sudo firewall-cmd --reload
 
 # Utils and common requirements
 # uv

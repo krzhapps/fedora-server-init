@@ -4,3 +4,4 @@ Fedora server setup automation. Provisions a fresh machine by installing and con
 ## Software
 1. Git
 2. Tailscale
+3. Claude
