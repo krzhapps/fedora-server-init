@@ -1,0 +1,14 @@
+[Unit]
+Description=Server Dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/server-dashboard
+Environment=MEDIA_ROOT=/root/jellyfin/media
+Environment=LISTEN_ADDR=:8090
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

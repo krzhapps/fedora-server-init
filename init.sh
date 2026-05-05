@@ -13,5 +13,6 @@ bash "$SCRIPT_DIR/Software/Uv/init.sh"
 bash "$SCRIPT_DIR/Software/Tmux/init.sh"
 bash "$SCRIPT_DIR/Software/Golang/init.sh"
 bash "$SCRIPT_DIR/Software/Jellyfin/init.sh"
+bash "$SCRIPT_DIR/Software/Dashboard/init.sh"
 
 echo "==> Setup complete."

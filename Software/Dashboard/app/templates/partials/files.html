@@ -1,0 +1,73 @@
+{{define "files.html"}}
+<div class="space-y-4">
+  <div class="flex items-center justify-between gap-4">
+    <div class="text-xs text-slate-400">
+      <span class="text-slate-500">path:</span>
+      <span class="font-mono text-slate-300">/{{.Path}}</span>
+    </div>
+    <form
+      class="flex items-center gap-2"
+      hx-encoding="multipart/form-data"
+      hx-post="/files/upload"
+      hx-target="#upload-result"
+      hx-swap="innerHTML">
+      <input type="hidden" name="path" value="{{.Path}}">
+      <input
+        type="file"
+        name="file"
+        required
+        class="text-xs text-slate-400 file:mr-2 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-slate-100 hover:file:bg-slate-600">
+      <button
+        type="submit"
+        class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500">
+        Upload
+      </button>
+    </form>
+  </div>
+
+  <div id="upload-result" class="text-xs"></div>
+
+  {{if .Error}}
+    <p class="text-sm text-rose-400">Error: {{.Error}}</p>
+  {{else}}
+  <ul class="divide-y divide-slate-800 rounded-lg border border-slate-800 overflow-hidden">
+    {{if not .AtRoot}}
+    <li>
+      <button
+        class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-800/60"
+        hx-get="/files?path={{.Parent}}"
+        hx-target="closest div.space-y-4"
+        hx-swap="outerHTML">
+        <span class="text-slate-500">..</span>
+        <span>parent directory</span>
+      </button>
+    </li>
+    {{end}}
+    {{range .Entries}}
+    <li>
+      {{if .IsDir}}
+      <button
+        class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-800/60"
+        hx-get="/files?path={{$.Path}}/{{.Name}}"
+        hx-target="closest div.space-y-4"
+        hx-swap="outerHTML">
+        <span class="text-amber-400">📁</span>
+        <span class="flex-1">{{.Name}}</span>
+        <span class="text-xs text-slate-500">{{.ModTime.Format "2006-01-02 15:04"}}</span>
+      </button>
+      {{else}}
+      <div class="flex items-center gap-3 px-4 py-2 text-sm">
+        <span class="text-slate-500">📄</span>
+        <span class="flex-1 text-slate-300">{{.Name}}</span>
+        <span class="text-xs text-slate-500 tabular-nums">{{humanSize .Size}}</span>
+        <span class="text-xs text-slate-500">{{.ModTime.Format "2006-01-02 15:04"}}</span>
+      </div>
+      {{end}}
+    </li>
+    {{else}}
+    <li class="px-4 py-3 text-sm text-slate-500">empty directory</li>
+    {{end}}
+  </ul>
+  {{end}}
+</div>
+{{end}}
