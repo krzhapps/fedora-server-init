@@ -56,11 +56,17 @@ type viewData struct {
 	Error   string
 }
 
+type uploadedFile struct {
+	Name  string
+	Size  int64
+	Error string
+}
+
 type uploadResult struct {
-	Path    string
-	Name    string
-	Size    int64
-	Error   string
+	Path  string
+	Files []uploadedFile
+	Error string // form-level error before any file is processed
+	AllOK bool
 }
 
 // resolve returns the absolute filesystem path for a user-supplied relative
@@ -134,72 +140,116 @@ const maxUploadBytes = 50 << 30 // 50 GiB; media files are large
 func (m *Module) handleUpload(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		m.renderUploadError(w, "", "", fmt.Sprintf("parse form: %v", err))
+		m.renderUploadError(w, "", fmt.Sprintf("parse form: %v", err))
 		return
 	}
 	rel := strings.Trim(r.FormValue("path"), "/")
 	dir, err := m.resolve(rel)
 	if err != nil {
-		m.renderUploadError(w, rel, "", err.Error())
+		m.renderUploadError(w, rel, err.Error())
 		return
 	}
 	info, err := os.Stat(dir)
 	if err != nil || !info.IsDir() {
-		m.renderUploadError(w, rel, "", "target is not a directory")
+		m.renderUploadError(w, rel, "target is not a directory")
 		return
 	}
 
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		m.renderUploadError(w, rel, "", fmt.Sprintf("read file: %v", err))
-		return
-	}
-	defer file.Close()
-
-	name := filepath.Base(header.Filename)
-	if name == "" || name == "." || name == "/" || strings.Contains(name, string(os.PathSeparator)) {
-		m.renderUploadError(w, rel, header.Filename, "invalid filename")
+	headers := r.MultipartForm.File["file"]
+	if len(headers) == 0 {
+		m.renderUploadError(w, rel, "no files selected")
 		return
 	}
 
-	dest := filepath.Join(dir, name)
-	tmp, err := os.CreateTemp(dir, ".upload-*")
-	if err != nil {
-		m.renderUploadError(w, rel, name, fmt.Sprintf("temp file: %v", err))
-		return
-	}
-	tmpPath := tmp.Name()
-	written, copyErr := io.Copy(tmp, file)
-	closeErr := tmp.Close()
-	if copyErr != nil || closeErr != nil {
-		_ = os.Remove(tmpPath)
-		msg := "copy failed"
-		if copyErr != nil {
-			msg = copyErr.Error()
-		} else if closeErr != nil {
-			msg = closeErr.Error()
+	result := uploadResult{Path: rel, AllOK: true}
+	for _, header := range headers {
+		f, err := header.Open()
+		if err != nil {
+			result.Files = append(result.Files, uploadedFile{Name: header.Filename, Error: err.Error()})
+			result.AllOK = false
+			continue
 		}
-		m.renderUploadError(w, rel, name, msg)
-		return
-	}
-	if err := os.Rename(tmpPath, dest); err != nil {
-		_ = os.Remove(tmpPath)
-		m.renderUploadError(w, rel, name, fmt.Sprintf("rename: %v", err))
-		return
+		written, err := m.saveFile(dir, header.Filename, f)
+		f.Close()
+		if err != nil {
+			result.Files = append(result.Files, uploadedFile{Name: header.Filename, Error: err.Error()})
+			result.AllOK = false
+		} else {
+			result.Files = append(result.Files, uploadedFile{Name: header.Filename, Size: written})
+		}
 	}
 
 	// Refresh SELinux labels so Jellyfin's container can read newly added files.
 	_ = exec.Command("chcon", "-Rt", "container_file_t", m.root).Run()
 
-	_ = m.renderer.RenderPartial(w, "upload-result.html", uploadResult{
-		Path: rel, Name: name, Size: written,
-	})
+	_ = m.renderer.RenderPartial(w, "upload-result.html", result)
 }
 
-func (m *Module) renderUploadError(w http.ResponseWriter, path, name, msg string) {
+// saveFile writes a single uploaded file into baseDir, creating any intermediate
+// subdirectories encoded in rawName (as sent by browsers for webkitdirectory uploads).
+func (m *Module) saveFile(baseDir, rawName string, src io.Reader) (int64, error) {
+	parts, err := sanitizeRelPath(rawName)
+	if err != nil {
+		return 0, err
+	}
+
+	destDir := baseDir
+	if len(parts) > 1 {
+		destDir = filepath.Join(append([]string{baseDir}, parts[:len(parts)-1]...)...)
+		if err := os.MkdirAll(destDir, 0o755); err != nil {
+			return 0, fmt.Errorf("mkdir: %w", err)
+		}
+	}
+
+	dest := filepath.Join(destDir, parts[len(parts)-1])
+	tmp, err := os.CreateTemp(destDir, ".upload-*")
+	if err != nil {
+		return 0, fmt.Errorf("temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	written, copyErr := io.Copy(tmp, src)
+	closeErr := tmp.Close()
+	if copyErr != nil || closeErr != nil {
+		_ = os.Remove(tmpPath)
+		if copyErr != nil {
+			return 0, copyErr
+		}
+		return 0, closeErr
+	}
+	if err := os.Rename(tmpPath, dest); err != nil {
+		_ = os.Remove(tmpPath)
+		return 0, fmt.Errorf("rename: %w", err)
+	}
+	return written, nil
+}
+
+// sanitizeRelPath splits a browser-supplied filename (which may contain forward
+// or back slashes for webkitdirectory uploads) into clean path components,
+// rejecting any component that could escape the destination directory.
+func sanitizeRelPath(rawName string) ([]string, error) {
+	rawName = strings.ReplaceAll(rawName, "\\", "/")
+	parts := strings.Split(rawName, "/")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" || p == "." {
+			continue
+		}
+		if p == ".." || strings.ContainsAny(p, "/\\") {
+			return nil, errors.New("invalid path component")
+		}
+		out = append(out, p)
+	}
+	if len(out) == 0 {
+		return nil, errors.New("invalid filename")
+	}
+	return out, nil
+}
+
+func (m *Module) renderUploadError(w http.ResponseWriter, path, msg string) {
 	w.WriteHeader(http.StatusBadRequest)
 	_ = m.renderer.RenderPartial(w, "upload-result.html", uploadResult{
-		Path: path, Name: name, Error: msg,
+		Path: path, Error: msg,
 	})
 }
 

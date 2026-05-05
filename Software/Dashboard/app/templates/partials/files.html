@@ -34,12 +34,33 @@
         <input
           type="file"
           name="file"
+          multiple
           required
           class="text-xs text-slate-400 file:mr-2 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-slate-100 hover:file:bg-slate-600">
         <button
           type="submit"
           class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500">
           Upload
+        </button>
+      </form>
+      <form
+        class="flex items-center gap-2"
+        hx-encoding="multipart/form-data"
+        hx-post="/files/upload"
+        hx-target="#upload-result"
+        hx-swap="innerHTML">
+        <input type="hidden" name="path" value="{{.Path}}">
+        <input
+          type="file"
+          name="file"
+          webkitdirectory
+          multiple
+          required
+          class="text-xs text-slate-400 file:mr-2 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-slate-100 hover:file:bg-slate-600">
+        <button
+          type="submit"
+          class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500">
+          Folder
         </button>
       </form>
     </div>
