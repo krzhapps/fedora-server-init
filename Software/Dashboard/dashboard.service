@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/server-dashboard
-Environment=MEDIA_ROOT=/root/jellyfin/media
+Environment=MEDIA_ROOT=/home/dkrzhalovski/jellyfin/media
 Environment=LISTEN_ADDR=:8090
 Restart=always
 RestartSec=5

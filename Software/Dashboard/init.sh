@@ -44,6 +44,7 @@ echo "==> Installing systemd unit"
 sudo install -m 0644 "$SCRIPT_DIR/dashboard.service" /etc/systemd/system/dashboard.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now dashboard.service
+sudo systemctl restart dashboard.service
 
 echo "==> Opening firewall port 8090/tcp"
 sudo firewall-cmd --permanent --add-port=8090/tcp
