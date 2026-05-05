@@ -1,0 +1,23 @@
+{{define "upload-result.html"}}
+{{if .Error}}
+  <span class="text-rose-400">Upload failed: {{.Error}}</span>
+{{else if .AllOK}}
+  <span class="text-emerald-400"
+        hx-get="/files?path={{.Path}}"
+        hx-trigger="load delay:500ms"
+        hx-target="closest div.space-y-4"
+        hx-swap="outerHTML">
+    Uploaded {{len .Files}} file{{if gt (len .Files) 1}}s{{end}}. Refreshing…
+  </span>
+{{else}}
+  <div class="space-y-0.5">
+    {{range .Files}}
+    {{if .Error}}
+      <div class="text-rose-400">✗ {{.Name}}: {{.Error}}</div>
+    {{else}}
+      <div class="text-emerald-400">✓ {{.Name}} ({{humanSize .Size}})</div>
+    {{end}}
+    {{end}}
+  </div>
+{{end}}
+{{end}}
