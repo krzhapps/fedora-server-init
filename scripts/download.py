@@ -25,10 +25,15 @@ def api_get(path, cookie):
     url = f"{API_BASE}{path}"
     result = subprocess.run(
         [
-            "curl", "-sf", "-4",
-            "-H", f"Cookie: _simpleauth_sess={cookie}",
-            "-H", "Accept: application/json",
-            "-H", "User-Agent: humble-downloader/1.0",
+            "curl",
+            "-sf",
+            "-4",
+            "-H",
+            f"Cookie: _simpleauth_sess={cookie}",
+            "-H",
+            "Accept: application/json",
+            "-H",
+            "User-Agent: humble-downloader/1.0",
             url,
         ],
         capture_output=True,
@@ -57,11 +62,15 @@ def download_file(url, dest_path):
     # Use curl: avoids Python's 60s IPv6-first connection delay on this host
     tmp_path = dest_path + ".part"
     try:
-        result = subprocess.run(
+        _ = subprocess.run(
             [
-                "curl", "-f", "-L", "--progress-bar",
-                "-4",                   # force IPv4, avoids 60s IPv6 timeout
-                "-o", tmp_path,
+                "curl",
+                "-f",
+                "-L",
+                "--progress-bar",
+                "-4",  # force IPv4, avoids 60s IPv6 timeout
+                "-o",
+                tmp_path,
                 url,
             ],
             check=True,
@@ -120,7 +129,10 @@ def main():
             book_title = slugify(subproduct["human_name"])
 
             for dl in subproduct.get("downloads", []):
-                if dl.get("platform") not in ("ebook", None) and dl.get("platform", "ebook") != "ebook":
+                if (
+                    dl.get("platform") not in ("ebook", None)
+                    and dl.get("platform", "ebook") != "ebook"
+                ):
                     continue
 
                 structs = pick_formats(dl.get("download_struct", []))
@@ -159,7 +171,9 @@ def main():
 
         print()
 
-    print(f"Done. Downloaded: {total_downloaded}  Skipped: {total_skipped}  Errors: {total_errors}")
+    print(
+        f"Done. Downloaded: {total_downloaded}  Skipped: {total_skipped}  Errors: {total_errors}"
+    )
 
 
 if __name__ == "__main__":

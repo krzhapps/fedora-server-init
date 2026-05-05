@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 sudo podman pull docker.io/jellyfin/jellyfin:latest
 
 sudo podman stop jellyfin

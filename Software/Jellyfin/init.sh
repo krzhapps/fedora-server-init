@@ -1,6 +1,9 @@
-sudo dnf5 install podman -y
+#!/usr/bin/env bash
+set -euo pipefail
 
-sudo firewall-cmd --add-port=8096/tcp --permanent
+sudo dnf5 install -y podman
+
+sudo firewall-cmd --permanent --add-port=8096/tcp --add-port=8080/tcp
 sudo firewall-cmd --reload
 
 sudo mkdir -p ~/jellyfin/{cache,config,media}
@@ -14,7 +17,7 @@ sudo podman run -d \
   -v ~/jellyfin/media:/media:ro,z \
   docker.io/jellyfin/jellyfin:latest
 
-mkdir ~/filebrowser
+mkdir -p ~/filebrowser
 touch ~/filebrowser/filebrowser.db
 
 sudo podman run -d \
@@ -26,6 +29,6 @@ sudo podman run -d \
   docker.io/filebrowser/filebrowser:latest \
   --port 8080
 
-# sudo podman logs media-filebrowser # Use it to check the randomly generated password
+# Run: sudo podman logs media-filebrowser — to retrieve the auto-generated password
 
 sudo systemctl enable --now podman-restart.service

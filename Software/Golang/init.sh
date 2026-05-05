@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 sudo dnf install -y golang
 
 echo 'export GOPATH=$HOME/go' >> ~/.bashrc
