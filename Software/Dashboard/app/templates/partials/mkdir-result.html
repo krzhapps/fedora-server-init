@@ -1,0 +1,13 @@
+{{define "mkdir-result.html"}}
+{{if .Error}}
+  <span class="text-rose-400">Create failed{{if .Name}} ({{.Name}}){{end}}: {{.Error}}</span>
+{{else}}
+  <span class="text-emerald-400"
+        hx-get="/files?path={{.Path}}"
+        hx-trigger="load delay:500ms"
+        hx-target="closest div.space-y-4"
+        hx-swap="outerHTML">
+    Created {{.Name}}. Refreshing…
+  </span>
+{{end}}
+{{end}}

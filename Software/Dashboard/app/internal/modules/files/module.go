@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -37,6 +38,7 @@ func (m *Module) UseRenderer(r *server.Renderer) {
 func (m *Module) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /files", m.handleList)
 	mux.HandleFunc("POST /files/upload", m.handleUpload)
+	mux.HandleFunc("POST /files/mkdir", m.handleMkdir)
 }
 
 type Entry struct {
@@ -186,6 +188,9 @@ func (m *Module) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Refresh SELinux labels so Jellyfin's container can read newly added files.
+	_ = exec.Command("chcon", "-Rt", "container_file_t", m.root).Run()
+
 	_ = m.renderer.RenderPartial(w, "upload-result.html", uploadResult{
 		Path: rel, Name: name, Size: written,
 	})
@@ -194,6 +199,40 @@ func (m *Module) handleUpload(w http.ResponseWriter, r *http.Request) {
 func (m *Module) renderUploadError(w http.ResponseWriter, path, name, msg string) {
 	w.WriteHeader(http.StatusBadRequest)
 	_ = m.renderer.RenderPartial(w, "upload-result.html", uploadResult{
+		Path: path, Name: name, Error: msg,
+	})
+}
+
+type mkdirResult struct {
+	Path  string
+	Name  string
+	Error string
+}
+
+func (m *Module) handleMkdir(w http.ResponseWriter, r *http.Request) {
+	rel := strings.Trim(r.FormValue("path"), "/")
+	name := filepath.Base(strings.TrimSpace(r.FormValue("name")))
+	if name == "" || name == "." || strings.Contains(name, string(os.PathSeparator)) {
+		m.renderMkdirError(w, rel, name, "invalid directory name")
+		return
+	}
+	dir, err := m.resolve(rel)
+	if err != nil {
+		m.renderMkdirError(w, rel, name, err.Error())
+		return
+	}
+	dest := filepath.Join(dir, name)
+	if err := os.Mkdir(dest, 0o755); err != nil {
+		m.renderMkdirError(w, rel, name, err.Error())
+		return
+	}
+	_ = exec.Command("chcon", "-Rt", "container_file_t", m.root).Run()
+	_ = m.renderer.RenderPartial(w, "mkdir-result.html", mkdirResult{Path: rel, Name: name})
+}
+
+func (m *Module) renderMkdirError(w http.ResponseWriter, path, name, msg string) {
+	w.WriteHeader(http.StatusBadRequest)
+	_ = m.renderer.RenderPartial(w, "mkdir-result.html", mkdirResult{
 		Path: path, Name: name, Error: msg,
 	})
 }
