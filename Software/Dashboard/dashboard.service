@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 ExecStart=/usr/local/bin/server-dashboard
 Environment=MEDIA_ROOT=/home/dkrzhalovski/jellyfin/media
+Environment=SNIPPETS_FILE=/home/dkrzhalovski/snippets.json
 Environment=LISTEN_ADDR=:8090
 Restart=always
 RestartSec=5
