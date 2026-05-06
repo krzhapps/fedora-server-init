@@ -37,6 +37,7 @@ func (m *Module) UseRenderer(r *server.Renderer) {
 func (m *Module) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /snippets", m.handleList)
 	mux.HandleFunc("POST /snippets", m.handleCreate)
+	mux.HandleFunc("DELETE /snippets/{id}", m.handleDelete)
 }
 
 type viewData struct {
@@ -75,6 +76,36 @@ func (m *Module) handleCreate(w http.ResponseWriter, r *http.Request) {
 	if renderErr := m.renderer.RenderPartial(w, "snippets.html", data); renderErr != nil {
 		http.Error(w, renderErr.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (m *Module) handleDelete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	snippets, err := m.deleteSnippet(id)
+	data := viewData{}
+	if err != nil {
+		data.Error = err.Error()
+	} else {
+		data.Snippets = recent(snippets, 5)
+	}
+	if renderErr := m.renderer.RenderPartial(w, "snippets.html", data); renderErr != nil {
+		http.Error(w, renderErr.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (m *Module) deleteSnippet(id string) ([]Snippet, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	existing, err := m.load()
+	if err != nil {
+		return nil, err
+	}
+	updated := make([]Snippet, 0, len(existing))
+	for _, s := range existing {
+		if s.ID != id {
+			updated = append(updated, s)
+		}
+	}
+	return updated, m.save(updated)
 }
 
 func (m *Module) readSnippets() ([]Snippet, error) {

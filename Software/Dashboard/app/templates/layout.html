@@ -6,6 +6,29 @@
   <title>Server Dashboard</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/htmx.min.js" defer></script>
+  <script>
+    function copySnippet(btn) {
+      const text = btn.parentElement.querySelector('pre').textContent;
+      const done = () => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallback(text, done));
+      } else {
+        fallback(text, done);
+      }
+    }
+    function fallback(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } finally { document.body.removeChild(ta); }
+    }
+  </script>
 </head>
 <body class="h-full text-slate-100 font-sans antialiased">
   <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur">

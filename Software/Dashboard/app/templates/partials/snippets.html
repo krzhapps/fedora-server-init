@@ -26,13 +26,23 @@
 {{else}}
   <ul class="space-y-2">
     {{range .Snippets}}
-    <li class="relative rounded-lg bg-slate-800/60 border border-slate-700/50 p-3 pr-16">
+    <li class="relative rounded-lg bg-slate-800/60 border border-slate-700/50 p-3 pr-28">
       <pre class="text-xs text-slate-300 font-mono whitespace-pre-wrap break-all max-h-28 overflow-y-auto">{{.Content}}</pre>
-      <button
-        onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(() => { this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 1500); })"
-        class="absolute top-2 right-2 px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300">
-        Copy
-      </button>
+      <div class="absolute top-2 right-2 flex gap-1">
+        <button
+          onclick="copySnippet(this)"
+          class="px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300">
+          Copy
+        </button>
+        <button
+          hx-delete="/snippets/{{.ID}}"
+          hx-target="#snippets-panel"
+          hx-swap="innerHTML"
+          hx-confirm="Delete this snippet?"
+          class="px-2 py-1 text-xs rounded bg-rose-700/70 hover:bg-rose-600 text-rose-100">
+          Delete
+        </button>
+      </div>
     </li>
     {{end}}
   </ul>
