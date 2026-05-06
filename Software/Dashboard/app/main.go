@@ -14,6 +14,7 @@ import (
 
 	"github.com/krzhalovski/fedora-server-init/dashboard/internal/modules/containers"
 	"github.com/krzhalovski/fedora-server-init/dashboard/internal/modules/files"
+	"github.com/krzhalovski/fedora-server-init/dashboard/internal/modules/snippets"
 	"github.com/krzhalovski/fedora-server-init/dashboard/internal/server"
 )
 
@@ -26,6 +27,7 @@ var staticFS embed.FS
 func main() {
 	addr := envOr("LISTEN_ADDR", ":8090")
 	mediaRoot := envOr("MEDIA_ROOT", "/root/jellyfin/media")
+	snippetsFile := envOr("SNIPPETS_FILE", "/root/snippets.json")
 
 	templates, err := fs.Sub(templatesFS, "templates")
 	if err != nil {
@@ -41,6 +43,7 @@ func main() {
 		Static:    static,
 		Modules: []server.Module{
 			containers.New(),
+			snippets.New(snippetsFile),
 			files.New(mediaRoot),
 		},
 	})

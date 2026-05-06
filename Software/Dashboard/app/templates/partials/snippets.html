@@ -1,0 +1,41 @@
+{{define "snippets.html"}}
+{{if .Error}}
+  <p class="text-sm text-rose-400 mb-3">{{.Error}}</p>
+{{end}}
+
+<details class="mb-4">
+  <summary class="cursor-pointer text-sm font-medium text-indigo-400 hover:text-indigo-300 select-none w-fit">
+    + New Snippet
+  </summary>
+  <form hx-post="/snippets" hx-target="#snippets-panel" hx-swap="innerHTML" class="mt-3 space-y-2">
+    <textarea
+      name="content"
+      rows="4"
+      placeholder="Paste or type snippet…"
+      class="w-full rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 p-2.5 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"></textarea>
+    <button
+      type="submit"
+      class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-medium">
+      Add
+    </button>
+  </form>
+</details>
+
+{{if not .Snippets}}
+  <p class="text-sm text-slate-500">No snippets yet.</p>
+{{else}}
+  <ul class="space-y-2">
+    {{range .Snippets}}
+    <li class="relative rounded-lg bg-slate-800/60 border border-slate-700/50 p-3 pr-16">
+      <pre class="text-xs text-slate-300 font-mono whitespace-pre-wrap break-all max-h-28 overflow-y-auto">{{.Content}}</pre>
+      <button
+        data-content="{{.Content}}"
+        onclick="navigator.clipboard.writeText(this.dataset.content).then(() => { this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 1500); })"
+        class="absolute top-2 right-2 px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300">
+        Copy
+      </button>
+    </li>
+    {{end}}
+  </ul>
+{{end}}
+{{end}}
