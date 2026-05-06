@@ -29,8 +29,7 @@
     <li class="relative rounded-lg bg-slate-800/60 border border-slate-700/50 p-3 pr-16">
       <pre class="text-xs text-slate-300 font-mono whitespace-pre-wrap break-all max-h-28 overflow-y-auto">{{.Content}}</pre>
       <button
-        data-content="{{.Content}}"
-        onclick="navigator.clipboard.writeText(this.dataset.content).then(() => { this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 1500); })"
+        onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(() => { this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 1500); })"
         class="absolute top-2 right-2 px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300">
         Copy
       </button>
