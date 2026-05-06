@@ -8,7 +8,7 @@
   <script src="/static/htmx.min.js" defer></script>
   <script>
     function copySnippet(btn) {
-      const text = btn.parentElement.querySelector('pre').textContent;
+      const text = btn.closest('li').querySelector('pre').textContent;
       const done = () => {
         btn.textContent = 'Copied!';
         setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
