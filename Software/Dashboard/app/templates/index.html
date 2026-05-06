@@ -7,7 +7,6 @@
       <p class="text-sm text-slate-500">Loading media…</p>
     </div>
   </section>
-  {{end}}
   {{else if eq .Panel "snippets.html"}}
   <section class="rounded-xl border border-slate-800 bg-slate-900/40 p-6 shadow-sm">
     <h2 class="text-base font-semibold text-slate-200 mb-4">{{.Name}}</h2>
@@ -15,13 +14,12 @@
       <p class="text-sm text-slate-500">Loading snippets…</p>
     </div>
   </section>
-  {{end}}
-  {{if eq .Panel "containers.html"}}
+  {{else if eq .Panel "containers.html"}}
   <section class="rounded-xl border border-slate-800 bg-slate-900/40 p-6 shadow-sm">
     <h2 class="text-base font-semibold text-slate-200 mb-4">{{.Name}}</h2>
     <div hx-get="/containers/rows" hx-trigger="load, every 5s" hx-swap="innerHTML">
       <p class="text-sm text-slate-500">Loading containers…</p>
     </div>
   </section>
-{{end}}
+  {{end}}
 {{end}}
